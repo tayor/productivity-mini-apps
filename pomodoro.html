@@ -1,0 +1,208 @@
+<html>
+
+<head>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/daisyui/dist/full.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <style>
+    .dark-theme {
+        background-color: #1a202c;
+        color: #a0aec0;
+    }
+
+    .dark-theme .bg-white {
+        background-color: #2d3748;
+    }
+
+    .dark-theme .text-gray-500 {
+        color: #a0aec0;
+    }
+
+    .dark-theme .text-black {
+        color: #a0aec0;
+    }
+
+    .dark-theme .border {
+        border-color: #4a5568;
+    } 
+  </style>
+</head>
+
+<body class="bg-gray-100 h-screen flex items-center justify-center" x-data="pomodoro()" x-bind:class="{ 'dark-theme': isDarkMode }">
+
+  <div class="bg-white p-6 rounded-lg shadow-lg">
+
+    <div class="flex justify-end items-center mb-4">
+
+      <div class="space-x-4 flex">
+        <button class="hover:bg-gray-300 dark:hover:bg-gray-700 p-2 rounded-full w-8 h-8 flex items-center justify-center" x-on:click="toggleDarkMode()">
+          <i class="fas" x-bind:class="isDarkMode ? 'fa-sun' : 'fa-moon'"></i>
+        </button>
+        <button class="hover:bg-gray-300 dark:hover:bg-gray-700 p-2 rounded-full w-8 h-8 flex items-center justify-center" x-on:click="showSettings = true">
+          <i class="fas fa-cog"></i>
+        </button>
+      </div>
+
+    </div>
+
+<div class="join">
+    <button class="join-item btn btn-primary" x-on:click="setTime('work')">Pomodoro</button>
+    <button class="join-item btn btn-primary" x-on:click="setTime('shortBreak')">Short Break</button>
+    <button class="join-item btn btn-primary" x-on:click="setTime('longBreak')">Long Break</button>
+</div>
+
+
+
+    <div class="flex flex-col items-center mt-4">
+
+      <div class="w-60 h-60 flex items-center justify-center">
+        <div class="radial-progress bg-primary border-4 border-primary text-primary-content" x-bind:style="'--size:12rem; --thickness: 0.5rem; --value:' + progress;"></div>
+        <h1 x-text="display" class="text-6xl font-bold text-white absolute"></h1>
+      </div>
+    
+    
+
+      <div class="flex space-x-4 mt-4">
+        <button x-on:click="startStop" class="btn btn-primary">
+          <i class="fas" x-bind:class="running ? 'fa-pause' : 'fa-play'"></i>
+        </button>
+      </div>
+
+    </div>
+ 
+<div class="fixed w-full h-full top-0 left-0 flex items-center justify-center" x-show="showSettings" 
+      style="background-color: rgba(0,0,0,0.5);">
+      <div class="bg-white p-6 mx-4 md:max-w-xl md:mx-auto rounded-lg shadow-2xl z-50 overflow-y-auto relative">
+        <div class="modal-close absolute top-0 right-0 cursor-pointer flex flex-col items-center mt-4 mr-4 text-black text-sm z-50" 
+          @click="showSettings = false">
+              <i class="fas fa-times"></i>
+        </div>
+        
+        <div class="py-4 text-left px-6">
+          <!-- Settings content -->
+          <div class="mt-4">
+            <label class="block font-medium">Work time (minutes):</label>
+            <input type="number" min="1" x-model="newWorkTime" class="w-full border-2 p-2 rounded-lg mt-1">
+          </div>
+
+          <div class="mt-4">
+            <label class="block font-medium">Short break time (minutes):</label>  
+            <input type="number" min="1" x-model="newShortBreakTime" class="w-full border-2 p-2 rounded-lg mt-1"> 
+          </div>
+
+          <div class="mt-4">
+            <label class="block font-medium">Long break time (minutes):</label>  
+            <input type="number" min="1" x-model="newLongBreakTime" class="w-full border-2 p-2 rounded-lg mt-1"> 
+          </div>
+        </div>
+
+        <div class="px-6 py-4 flex justify-end">
+          <button @click="updateTimes()" class="btn btn-primary">
+            Confirm
+          </button>
+        </div>
+      </div>
+</div>
+
+  </div>
+
+  <script>
+    function pomodoro() {
+      return {
+        isDarkMode: false,
+        progress: 100, 
+        totalSeconds: 25*60, // To hold the total seconds for each session
+        elapsedSeconds: 0, // To hold the elapsed seconds    
+        display: '25:00',
+        running: false,
+        interval: null,
+        workTime: 25,
+        shortBreakTime: 5,
+        longBreakTime: 15,
+        newWorkTime: 25,
+        newShortBreakTime: 5,
+        newLongBreakTime: 15,
+        lastButton: 'work', // to keep track of last button clicked
+        minutes: 25,
+        seconds: 0,
+        showSettings: false,
+        toggleDarkMode() {
+          this.isDarkMode = !this.isDarkMode;
+          if (this.isDarkMode) {
+            document.body.classList.add('dark-theme');
+          } else {
+            document.body.classList.remove('dark-theme');
+          }
+        },
+        setTime(button) {
+          this.lastButton = button;
+          if(button === 'work') {
+            this.minutes = this.workTime;
+          } else if(button === 'shortBreak') {
+            this.minutes = this.shortBreakTime;
+          } else if(button === 'longBreak') {
+            this.minutes = this.longBreakTime;
+          }
+          this.reset();
+          this.totalSeconds = this.minutes * 60; // Set the total seconds for the session
+           },
+        startStop() {
+          if (this.running) {
+            this.running = false;
+            clearInterval(this.interval);
+          } else {
+            this.running = true;
+            this.interval = setInterval(() => {
+              if (this.seconds == 0) {
+                if (this.minutes == 0) {
+                  this.reset();
+                  this.playAlarm();
+                } else {
+                  this.minutes--;
+                  this.seconds = 59;
+                }
+              } else {
+                this.seconds--;
+              }
+              this.display = (this.minutes).toString().padStart(2, '0') + ':' + (this.seconds).toString().padStart(2, '0');
+            
+              this.elapsedSeconds++;
+              this.progress = ((this.totalSeconds - this.elapsedSeconds) / this.totalSeconds) * 100;
+              this.display = (this.minutes).toString().padStart(2, '0') + ':' + (this.seconds).toString().padStart(2, '0');
+                  
+            
+            
+            }, 1000);
+          }
+        },
+        reset() {
+          this.running = false;
+          clearInterval(this.interval);
+          this.seconds = 0;
+          this.display = (this.minutes).toString().padStart(2, '0') + ':' + (this.seconds).toString().padStart(2, '0');
+
+      this.elapsedSeconds = 0; // Reset the elapsed seconds
+      this.progress = 100; // Reset the progress
+
+        },
+        playAlarm() {
+          let audio = new Audio('https://freesound.org/data/previews/219/219244_4082826-lq.mp3');
+          audio.play();
+        },
+        updateTimes() {
+          this.workTime = this.newWorkTime;
+          this.shortBreakTime = this.newShortBreakTime;
+          this.longBreakTime = this.newLongBreakTime;
+          this.setTime(this.lastButton); // sets the timer to the time of the last button clicked
+          this.showSettings = false;
+        },
+      };
+  
+    }
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kanban Board</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@1.16.2/dist/daisyui.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <style>
+        /* Common Styles (light and dark mode) */
+        body {
+          --tw-bg-opacity: 1;
+          --tw-text-opacity: 1;
+        }
+    
+        /* Light Mode Styles */
+        body:not(.dark) {
+          background-color: #fff;
+          color: #000;
+        }
+    
+        body:not(.dark) .dark-element {
+          background-color: rgba(37, 42, 49, var(--tw-bg-opacity));
+        }
+    
+        body:not(.dark) .dark-element-text {
+          color: rgba(229, 231, 235, var(--tw-text-opacity));
+        }
+    
+        /* Dark Mode Styles */
+        body.dark {
+          background-color: rgba(17, 24, 39, var(--tw-bg-opacity));
+          color: rgba(229, 231, 235, var(--tw-text-opacity));
+        }
+    
+        body.dark .dark-element {
+          background-color: rgba(37, 42, 49, var(--tw-bg-opacity));
+        }
+    
+        body.dark .dark-element-text {
+          color: rgba(229, 231, 235, var(--tw-text-opacity));
+        }
+    
+        body.dark .border,
+        body.dark .bg-gray-50,
+        body.dark .bg-gray-100,
+        body.dark .bg-gray-200 {
+          background-color: rgba(55, 65, 81, var(--tw-bg-opacity));
+        }
+    
+        body.dark .text-gray-400 {
+          color: rgba(147, 197, 253, var(--tw-text-opacity));
+        }
+    
+        /* Dark Mode Styles for the Button with Plus Icon */
+        body.dark button.dark-add-button {
+          background-color: #2d3748;
+          color: rgba(229, 231, 235, var(--tw-text-opacity));
+        }
+    
+        body.dark button.dark-add-button i {
+          color: rgba(147, 197, 253, var(--tw-text-opacity));
+        }
+    
+        /* Dark Mode Styles for the Modals */
+        body.dark .bg-black.bg-opacity-50 {
+          background-color: rgba(0, 0, 0, 0.5);
+        }
+    
+        body.dark .bg-white {
+          background-color: #1f2937;
+        }
+    
+        body.dark .text-white {
+          color: #fff;
+        }
+    
+        body.dark .border-gray-300 {
+          border-color: rgba(229, 231, 235, var(--tw-text-opacity));
+        }
+    
+        body.dark .bg-gray-300 {
+          background-color: rgba(229, 231, 235, var(--tw-bg-opacity));
+        }
+    
+        body.dark .bg-blue-500 {
+          background-color: #4299e1;
+        }
+    
+        body.dark .hover\:bg-blue-600:hover {
+          background-color: #3182ce;
+        }
+    
+        body.dark .bg-gray-200 {
+          background-color: rgba(55, 65, 81, var(--tw-bg-opacity));
+        }
+    
+        body.dark .hover\:bg-gray-300:hover {
+          background-color: rgba(59, 75, 94, var(--tw-bg-opacity));
+        }
+    
+        body.dark .text-gray-400 {
+          color: rgba(147, 197, 253, var(--tw-text-opacity));
+        }
+      </style>
+    
+      
+    
+
+</head>
+    <body x-data="{ darkMode: false }" x-bind:class="{ 'bg-gray-100': !darkMode, 'dark': darkMode }">
+        <div class="container mx-auto p-4" x-data="kanban()" x-init="init()">
+            <div class="flex justify-between items-center">
+                <div class="flex-grow text-center">
+                <h1 class="text-3xl mb-4">Kanban Board</h1>
+                </div>
+                <button @click="darkMode = !darkMode" class="bg-transparent">
+                    <i :class="darkMode ? 'fas fa-sun' : 'fas fa-moon'" class="text-xl"></i>
+                </button>       
+            </div>
+      <div class="flex space-x-4">
+        <template x-for="(board, index) in boards" :key="index">
+            <div class="w-80 rounded-lg shadow p-2"
+            :class="{'bg-white': !darkMode, 'dark-element': darkMode}"
+            @dragenter.prevent
+            @dragover.prevent
+            @drop="drop($event, index)">
+       
+              <div class="flex justify-between items-center mb-2">
+                <h2 class="text-xl font-semibold" x-text="board.title"></h2>
+                <div class="space-x-1">
+                  <button class="p-1 rounded-full hover:bg-gray-200" @click="editBoard(index)">
+                    <i class="fas fa-pen"></i>
+                  </button>
+                  <button class="p-1 rounded-full hover:bg-gray-200" @click="deleteBoard(index)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                <!-- Plus icon -->
+                <button class="p-1 rounded-full hover:bg-gray-200" @click="$dispatch('open-modal', { type: 'item', boardIndex: index })">
+                    <i class="fas fa-plus"></i>
+                </button>
+
+                </div>
+              </div>
+              <ul class="space-y-2 mb-2">
+
+                  <template x-for="(item, itemIndex) in board.items" :key="itemIndex">
+                    <li
+                      class="bg-gray-50 rounded-lg shadow p-2 cursor-move"
+                      draggable="true"
+                      @dragstart="dragstart($event, index, itemIndex)"
+                      @dragend="dragend($event)"
+                    >
+                      <p x-text="item.title"></p>
+                      <div class="mt-2 flex justify-end space-x-1">
+                        <button class="p-1 rounded-full hover:bg-gray-200" @click.stop="editItem(index, itemIndex)">
+                          <i class="fas fa-pen"></i>
+                        </button>
+                        <button class="p-1 rounded-full hover:bg-gray-200" @click.stop="deleteItem(index, itemIndex)">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </li>
+                  </template>
+                </ul>
+            </div>
+          </template>
+          
+        <button class="w-80 bg-white rounded-lg shadow p-2 flex items-center justify-center" @click="$dispatch('open-modal', { type: 'board' })">
+          <i class="fas fa-plus text-gray-400 text-xl"></i>
+        </button>
+      </div>
+      <!-- Board Modal -->
+      <div
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+        x-show.transition.opacity.duration.300ms="$store.modal.open && $store.modal.type === 'board'"
+        @click.away="$store.modal.open = false"
+      >
+        <div class="bg-white rounded-lg shadow p-4 w-full max-w-sm">
+          <h3 class="text-xl font-semibold mb-4" x-text="$store.modal.boardIndex === null ? 'Add Board' : 'Edit Board'"></h3>
+          <div class="">
+            <label for="" class="">Title</label><br />
+            <input type="text" class="border rounded-lg w-full p-2" x-model="$store.modal.title" />
+        </div>
+        <div class="mt-4 flex justify-end space-x-2">
+          <button class="bg-gray-200 hover:bg-gray-300 py-1 px-4 rounded-lg" @click="$store.modal.open = false">Cancel</button>
+          <button class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-4 rounded-lg" @click="saveBoard()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Item Modal -->
+    <div
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      x-show.transition.opacity.duration.300ms="$store.modal.open && $store.modal.type === 'item'"
+      @click.away="$store.modal.open = false"
+    >
+      <div class="bg-white rounded-lg shadow p-4 w-full max-w-sm">
+        <h3 class="text-xl font-semibold mb-4" x-text="$store.modal.itemIndex === null ? 'Add Item' : 'Edit Item'"></h3>
+        <div class="">
+          <label for="" class="">Title</label><br />
+          <input type="text" class="border rounded-lg w-full p-2" x-model="$store.modal.title" />
+        </div>
+        <div class="mt-4 flex justify-end space-x-2">
+          <button class="bg-gray-200 hover:bg-gray-300 py-1 px-4 rounded-lg" @click="$store.modal.open = false">Cancel</button>
+          <button class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-4 rounded-lg" @click="saveItem()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function kanban() {
+      return {
+        boards: [],
+        init() {
+            this.boards = JSON.parse(localStorage.getItem('kanban')) || [
+              { title: 'To Do', items: [] },
+              { title: 'Doing', items: [] },
+              { title: 'Done', items: [] },
+            ];
+            this.$watch('boards', (value) => {
+              localStorage.setItem('kanban', JSON.stringify(value));
+            });
+          },
+          
+        saveBoard() {
+          if (!this.$store.modal.title) return;
+          if (this.$store.modal.boardIndex === null) {
+            this.boards.push({ title: this.$store.modal.title, items: [] });
+          } else {
+            this.boards[this.$store.modal.boardIndex].title = this.$store.modal.title;
+          }
+          this.$store.modal.open = false;
+          this.$store.modal.title = '';
+          this.$store.modal.boardIndex = null;
+        },
+        editBoard(index) {
+          this.$store.modal.type = 'board';
+          this.$store.modal.boardIndex = index;
+          this.$store.modal.title = this.boards[index].title;
+          this.$store.modal.open = true;
+        },
+        deleteBoard(index) {
+          if (confirm('Are you sure you want to delete this board?')) {
+            this.boards.splice(index, 1);
+          }
+        },
+        saveItem() {
+          if (!this.$store.modal.title) return;
+          if (this.$store.modal.itemIndex === null) {
+            this.boards[this.$store.modal.boardIndex].items.push({ title: this.$store.modal.title });
+          } else {
+            this.boards[this.$store.modal.boardIndex].items[this.$store.modal.itemIndex].title = this.$store.modal.title;
+          }
+          this.$store.modal.open = false;
+          this.$store.modal.title = '';
+          this.$store.modal.boardIndex = null;
+          this.$store.modal.itemIndex = null;
+        },
+        editItem(boardIndex, itemIndex) {
+          this.$store.modal.type = 'item';
+          this.$store.modal.boardIndex = boardIndex;
+          this.$store.modal.itemIndex = itemIndex;
+          this.$store.modal.title = this.boards[boardIndex].items[itemIndex].title;
+          this.$store.modal.open = true;
+        },
+        deleteItem(boardIndex, itemIndex) {
+          if (confirm('Are you sure you want to delete this item?')) {
+            this.boards[boardIndex].items.splice(itemIndex, 1);
+        }
+    },
+    dragstart(e, boardIndex, itemIndex) {
+      e.dataTransfer.setData('text/plain', JSON.stringify({ boardIndex, itemIndex }));
+      e.target.classList.add('opacity-50');
+    },
+    dragend(e) {
+      e.target.classList.remove('opacity-50');
+    },
+    drop(e, boardIndex) {
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      const item = this.boards[data.boardIndex].items.splice(data.itemIndex, 1)[0];
+      this.boards[boardIndex].items.push(item);
+    },
+  };
+}
+
+document.addEventListener('alpine:init', () => {
+  Alpine.store('modal', {
+    open: false,
+    type: null,
+    boardIndex: null,
+    itemIndex: null,
+    title: '',
+  });
+});
+
+document.addEventListener('open-modal', (e) => {
+    const modalStore = Alpine.store('modal');
+    for (const key in e.detail) {
+      if (key !== 'open') {
+        modalStore[key] = e.detail[key];
+      }
+    }
+    modalStore.open = true;
+  });
+</script>
+
+
+</body>
+</html>

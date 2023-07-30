@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productivity Mini Apps</title>
+
+  <!-- Tailwind CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+
+  <!-- daisyUI CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@2.24.0/dist/full.css" rel="stylesheet" type="text/css" />
+
+  <!-- AlpineJS -->
+  <script defer src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"></script>
+
+  <!-- Custom CSS -->
+  <style>
+    body {
+      min-height: 100vh;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100">
+
+  <header class="bg-white shadow">
+    <div class="px-4 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <h1 class="text-2xl font-bold text-gray-900">
+        Productivity Mini Apps
+      </h1>
+    </div>
+  </header>
+
+  <main>
+    <div class="px-4 py-16 mx-auto max-w-7xl sm:py-24 sm:px-6 lg:px-8">
+
+      <div class="grid grid-cols-1 gap-12 lg:grid-cols-3">
+
+        <div class="shadow-xl card bg-base-100">
+          <div class="text-center card-body">
+            <h2 class="card-title">Pomodoro</h2>
+            <p>Time management technique for improved productivity.</p> 
+            <div class="justify-center card-actions">
+              <a href="pomodoro.html" class="btn btn-primary">Open Pomodoro</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="shadow-xl card bg-base-100">
+          <div class="text-center card-body">
+            <h2 class="card-title">Kanban</h2>
+            <p>Visual project and task management.</p>
+            <div class="justify-center card-actions">
+              <a href="kanban.html" class="btn btn-primary">Open Kanban</a> 
+            </div>
+          </div>
+        </div>
+
+        <div class="shadow-xl card bg-base-100">
+          <div class="text-center card-body">
+            <h2 class="card-title">Notes</h2> 
+            <p>Write and manage notes.</p>
+            <div class="justify-center card-actions">
+              <a href="notes.html" class="btn btn-primary">Open Notes</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+</body>
+
+</html>
